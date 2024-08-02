@@ -1,0 +1,208 @@
+<template>
+    <div class="main">
+        <div class="slds-grid slds-wrap">
+            <template if:false={showInventory}>
+                <template if:true={formSize}>
+                    <div class="slds-col slds-size_10-of-12">
+                        <div onkeyup={handleKeys}>
+                            <lightning-input type="text" 
+                                variant="standard" 
+                                name="name" 
+                                label="Search" 
+                                placeholder="type here..."
+                                data-value="searchInput"></lightning-input>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-12 slds-m-top_large searchBtn">
+                        <lightning-button variant="brand" label="Search" 
+                        title="search" onclick={handleSearch}></lightning-button>
+                    </div>
+            
+                </template>
+                <template if:false={formSize}>
+                    <div class="slds-col slds-size_9-of-12">
+                        <div onkeyup={handleKeys}>
+                            <lightning-input type="text" 
+                                variant="standard" 
+                                name="name" 
+                                label="Search" 
+                                placeholder="type here..."
+                                data-value="searchInput"></lightning-input>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-12 slds-m-top_large mobileSearchBtn">
+                        <lightning-button variant="brand" label="Search" 
+                        title="search" onclick={handleSearch}></lightning-button>
+                    </div>
+                </template>
+            </template>
+<!-- SEARCH INVENTORY -->
+    <template if:true={showInventory}>
+        <div class="slds-col slds-size_1-of-1">
+            <lightning-combobox
+            name="warehouse"
+            label="Warehouse"
+            value={warehouse}
+            options={warehouseOptions}
+            onchange={checkInventory} ></lightning-combobox>
+        </div>
+    </template>
+    <div class="slds-col slds-size_1-of-1 slds-m-top_x-small slds-m-bottom_x-small">
+        <lightning-input data-id="toggle" type="toggle" 
+                        label={btnLabel} checked={showInventory} onchange={checkInv}
+                        message-toggle-active="" message-toggle-inactive=""></lightning-input>
+    </div>
+        </div>
+<!-- END OF SEARCH GROUPS -->
+<!-- START PIN FEATURE -->
+        <template if:true={showWarn}>
+            <div class="showWarn">
+                <p>You can only pin 1 items at a time</p>
+            </div>
+        </template>
+    <template if:true={isPinned}>
+        <lightning-layout multiple-rows="true">
+        <template if:true={pinnedCards} for:each={pinnedCards} for:item="y" for:index="index">
+            <lightning-layout-item key={y.Id} class='pinned' size="12">
+                           <!-- Top Line -->
+                           <div class="slds-grid">
+                            <div class="slds-col slds-size_3-of-4 slds-m-left_x-small">
+                                <a href={y.url} target='_blank' class="searchLinks">
+                                    {y.name}
+                                </a>
+                            </div>
+                            <div class="slds-col slds-size-1-of-4 ">
+                                <span class="stockStatus">
+                                    Status: <b>{y.stock}</b>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-m-left_x-small">
+                            <p>{y.slug} </p>
+                        </div> 
+<!-- Show pricing input tools -->
+                        <div class="chevron">
+                            <template if:false={showInventory}>
+                            <template if:true={y.showPricing}>
+                                <lightning-icon icon-name="utility:chevrondown" alternative-text="Connected" size="xx-small"
+                                title="xx-small size" onclick={pinInputs}></lightning-icon>
+                                <div class="slds-grid">
+                                    <template lwc:if={y.Agency_Product__c}>
+                                        <span class="slds-col slds-size_4-of-8"></span>
+                                    </template>
+                                    <template lwc:else>
+                                        <lightning-input type="number"  
+                                                class="slds-col slds-size_2-of-8"
+                                                name={y.Id}
+                                                label="Sales Margin"
+                                                value={y.displayMargin}
+                                                onchange={handlePinMargin}></lightning-input>
+                                        <div class="slds-col slds-size_2-of-8 slds-m-left_small slds-m-top_xx-small salesPrice">
+                                            <label>Sales Price</label>
+                                            <span>{y.displayPrice}</span>
+                                        </div>
+                                        
+                                    </template>
+                                            <lightning-button-group class="slds-col slds-size_4-of-8 slds-m-top_large pinBtn">
+                                                <lightning-button label="UnPin" variant="destructive" onclick={unPinCard}  data-unpin={y.Id}></lightning-button>
+                                                <!-- <lightning-button label="Cart" variant="brand" onclick={addOrder}  data-cart={y.Id}></lightning-button>
+                                                <lightning-button label="Inv" variant="success" onclick={checkInv}  data-inv={y.Id}></lightning-button> -->
+                                            </lightning-button-group>
+                                        
+                                </div>
+                            </template>
+                        </template>
+                        <template if:true={showInventory}>
+                            <div class="slds-col slds-m-left_x-small slds-m-top_small">
+                                <p>All Company QTY: {y.allStock} - Qty Avail.: {y.wInv}</p>
+                            </div>
+                        </template>
+                            <template if:false={y.showPricing}>
+                                <lightning-icon icon-name="utility:chevronright" alternative-text="Connected" size="xx-small"
+                                    title="xx-small size" onclick={pinInputs} ></lightning-icon>
+                            </template>
+                        </div>
+            </lightning-layout-item>
+        </template>
+    </lightning-layout>
+
+    </template>
+<!-- END PIN -->
+<!-- LOADING SPINNER -->
+    <template if:false={loaded}>
+        <div class="exampleHolder">
+            <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+        </div>
+    </template>
+<!--START SHOW RESULTS  -->
+    <template if:true={loaded}>
+        <div class="slds-scrollable_y resSize">
+                <lightning-layout multiple-rows="true">
+                    <template if:true={prod} for:each={prod} for:item="x" for:index="index">
+                        <lightning-layout-item key={x.Id}  class="card" size="12">
+                           <!-- Top Line -->
+                            <div class="slds-grid">
+                                <div class="slds-col slds-size_3-of-4 slds-m-left_x-small">
+                                    <a href={x.url} target='_blank' class="searchLinks">
+                                        {x.name}
+                                    </a>
+                                </div>
+                                <div class="slds-col slds-size-1-of-4 ">
+                                    <span class="stockStatus">
+                                        Status: <b>{x.stock}</b>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="slds-grid slds-m-left_x-small">
+                                <p>{x.slug} </p>
+                            </div>
+<!-- Show pricing input tools -->
+                            <div class="chevron">
+                                <template if:false={showInventory}>
+                                <template lwc:if={x.showPricing}>
+                                    <lightning-icon icon-name="utility:chevrondown" alternative-text="Connected" size="xx-small"
+                                    title="xx-small size" onclick={closeInputs} data-close={x.Id}></lightning-icon>
+                                    <div class="slds-grid">
+                                        <template lwc:if={x.Agency_Product__c}>
+                                            <span class="slds-col slds-size_4-of-8"></span>
+                                        </template>
+                                        <template lwc:else>
+                                            <lightning-input type="number"  
+                                                    class="slds-col slds-size_2-of-8"
+                                                    name={x.Id}
+                                                    label="Sales Margin"
+                                                    value={x.displayMargin}
+                                                    onchange={handleMargin}></lightning-input>
+                                            <div class="slds-col slds-size_2-of-8 slds-m-left_small slds-m-top_xx-small salesPrice">
+                                                <label>Sales Price</label>
+                                                <span>{x.displayPrice}</span>
+                                            </div>
+                                        </template>
+                                            
+                                                <lightning-button-group class="slds-col slds-size_4-of-8 slds-m-top_large pinBtn">
+                                                    <lightning-button label="Pin" variant="destructive" onclick={pinCard}  data-pin={x.Id}></lightning-button>
+                                                    <!-- <lightning-button label="Cart" variant="brand" onclick={addOrder}  data-cart={x.Id}></lightning-button>
+                                                    <lightning-button label="Inv" variant="success" onclick={checkInv}  data-inv={x.Id}></lightning-button> -->
+                                                </lightning-button-group>
+                                            
+                                    </div>
+                                </template>
+                                <template lwc:else>
+                                    <lightning-icon icon-name="utility:chevronright" alternative-text="Connected" size="xx-small"
+                                        title="xx-small size" onclick={openInputs} data-name={x.Id}></lightning-icon>
+                                </template>
+                            </template>
+                            <template if:true={showInventory}>
+                                <div class="slds-col slds-m-left_x-small slds-m-top_small">
+                                    <p>All Company QTY: {x.allStock} - Qty Avail.: {x.wInv}</p>
+                                </div>
+                            </template>
+                            </div>
+                        </lightning-layout-item>
+                    </template>
+                </lightning-layout>
+        </div>
+    </template>
+
+</div>
+</template>
